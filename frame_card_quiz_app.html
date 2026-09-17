@@ -1,0 +1,1141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Frame Card Practice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cherry+Bomb+One&family=Epilogue:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --navy:#155679;
+    --cream:#fbf1e7;
+    --cream-splash:#ffeee3;
+    --gold:#fbb03b;
+    --gold-dark:#b77b05;
+    --teal:#409a81;
+    --teal-light:#74d7bc;
+    --coral:#f27c70;
+    --maroon:#600707;
+    --blue-light:#cfe2f0;
+    --white:#ffffff;
+  }
+  *{box-sizing:border-box;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    font-family:'Epilogue',Arial,Helvetica,sans-serif;
+    color:var(--navy);
+    background-color:var(--cream);
+    background-image:url("Assets/BackgroundPattern.png");
+    background-size:190px 190px;
+    background-repeat:repeat;
+    min-height:100vh;
+    line-height:1.35;
+    overflow-x:hidden;
+  }
+
+  /* ---------------- screens ---------------- */
+  .screen{
+    display:none;
+    min-height:100vh;
+    width:100%;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding:32px 16px 56px;
+    position:relative;
+  }
+  .screen.active{display:flex;animation:screenIn .5s cubic-bezier(.22,1.4,.4,1) both;}
+  @keyframes screenIn{
+    from{opacity:0;transform:translateY(18px) scale(.985);}
+    to{opacity:1;transform:translateY(0) scale(1);}
+  }
+  #setup.active{
+    background-color:var(--cream-splash);
+    background-image:url("Assets/BackgroundPattern.png");
+    background-size:190px 190px;
+    background-repeat:repeat;
+  }
+  .hidden{display:none !important;}
+
+  h2.section-heading{
+    font-family:'Epilogue',sans-serif;
+    font-weight:900;
+    font-size:clamp(20px,2.4vw,27px);
+    color:var(--navy);
+    text-align:center;
+    margin:0 0 14px;
+  }
+
+  /* ---------------- bunting / splash decor ---------------- */
+  .bunting{position:absolute;top:-40px;width:min(40vw,480px);pointer-events:none;z-index:0;animation:sway 5s ease-in-out infinite;}
+  .bunting-left{left:-40px;transform-origin:top left;}
+  .bunting-right{right:-40px;transform-origin:top right;animation-delay:.4s;}
+  .bunting img{width:100%;display:block;}
+  /* rotate is an independent transform property so it composes safely with
+     translate/scale declared separately below — animating the `transform`
+     shorthand here would instead replace those values outright. */
+  @keyframes sway{
+    0%,100%{rotate:0deg;}
+    50%{rotate:1.2deg;}
+  }
+
+  .logo{
+    width:min(90vw,560px);
+    margin:4px auto 48px;
+    display:block;
+    position:relative;
+    z-index:1;
+    filter:drop-shadow(0 6px 10px rgba(21,86,121,.25));
+    animation:logoPop .7s cubic-bezier(.22,1.6,.4,1) both;
+  }
+  @keyframes logoPop{
+    0%{opacity:0;transform:translateY(-16px) scale(.9);}
+    100%{opacity:1;transform:translateY(0) scale(1);}
+  }
+
+  /* ---------------- setup card ---------------- */
+  .setup-card{
+    position:relative;
+    z-index:1;
+    background:var(--white);
+    border:10px solid var(--navy);
+    border-radius:34px;
+    box-shadow:4px 4px 18px rgba(0,0,0,.25);
+    width:min(94vw,620px);
+    padding:28px 22px 20px;
+    margin-top:8px;
+  }
+  .setup-card-inner{
+    position:relative;
+    border-radius:22px;
+    padding:26px 18px 50px;
+  }
+  /* Dashed borders drawn as an SVG stroke instead of CSS `border: dashed` —
+     the CSS dash algorithm renders unevenly (or barely at all) once
+     border-radius gets large relative to the box, and gives no control over
+     dash length. An absolutely-positioned <svg><rect stroke-dasharray></svg>
+     sibling/overlay reproduces the same visual with an exact, tunable dash
+     pattern regardless of box size. */
+  .dash-outline{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;}
+  .dash-outline rect{fill:none;stroke:var(--navy);}
+  .setup-card-inner > .dash-outline rect{
+    x:1.5px;y:1.5px;width:calc(100% - 3px);height:calc(100% - 3px);
+    rx:20px;stroke-width:3px;stroke-dasharray:20 20;
+  }
+  .ribbon-top{
+    position:absolute;
+    top:-38px;
+    left:50%;
+    translate:-50% 0;
+    width:min(80%,360px);
+    z-index:2;
+    filter:drop-shadow(0 4px 4px rgba(21,86,121,.35));
+    animation:sway 4.5s ease-in-out infinite;
+  }
+
+  .option-row{
+    display:flex;
+    gap:10px;
+    justify-content:center;
+    flex-wrap:wrap;
+    margin-bottom:22px;
+  }
+  .option-tile{
+    position:relative;
+    font-family:inherit;
+    background:var(--white);
+    border:3px solid var(--navy);
+    border-radius:12px;
+    padding:14px 10px;
+    width:150px;
+    min-height:130px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    cursor:pointer;
+    transition:transform .18s ease, box-shadow .18s ease, border-color .18s ease;
+  }
+  .option-tile:hover:not(:disabled){transform:translateY(-4px) rotate(-.5deg);box-shadow:0 8px 14px rgba(21,86,121,.22);}
+  .option-tile:active:not(:disabled){transform:translateY(-1px) scale(.98);}
+  .option-tile.selected{border-color:var(--gold);border-width:4px;box-shadow:0 6px 14px rgba(251,176,59,.35);}
+  .option-tile:disabled{opacity:.4;cursor:not-allowed;}
+  .option-tile .tile-icon{
+    width:44px;height:44px;
+    background-color:var(--navy);
+    -webkit-mask-size:contain;mask-size:contain;
+    -webkit-mask-repeat:no-repeat;mask-repeat:no-repeat;
+    -webkit-mask-position:center;mask-position:center;
+    transition:background-color .18s ease;
+  }
+  .option-tile.selected .tile-icon{background-color:var(--gold);}
+  .icon-compass{-webkit-mask-image:url("Assets/compass.svg");mask-image:url("Assets/compass.svg");}
+  .icon-hourglass{-webkit-mask-image:url("Assets/hourglass-half-top.svg");mask-image:url("Assets/hourglass-half-top.svg");}
+  .icon-crown{-webkit-mask-image:url("Assets/crown.svg");mask-image:url("Assets/crown.svg");}
+  .option-tile .tile-title{font-weight:700;font-size:13px;text-align:center;color:var(--navy);}
+  .option-tile .tile-sub{font-weight:400;font-size:10.5px;text-align:center;color:var(--navy);opacity:.85;}
+  .selected-badge{
+    position:absolute;top:6px;right:6px;
+    width:24px;height:24px;
+    transform:scale(0);
+    transition:transform .28s cubic-bezier(.34,1.9,.5,1);
+  }
+  .option-tile.selected .selected-badge{transform:scale(1);}
+  .selected-badge img{width:100%;height:100%;}
+
+  .mini-frame{display:flex;flex-direction:column;}
+  .mini-frame .frame-row{display:flex;}
+  .mini-frame .frame-cell{width:17px;height:17px;border:1.4px solid var(--navy);background:var(--white);margin-left:-1.4px;}
+  .mini-frame .frame-row .frame-cell:first-child{margin-left:0;}
+  .mini-frame .frame-row + .frame-row .frame-cell{margin-top:-1.4px;}
+  .mini-frame-stack{display:flex;flex-direction:column;gap:7px;}
+
+  .btn-start{
+    position:absolute;
+    left:50%;bottom:-40px;
+    transform:translateX(-50%);
+    font-family:inherit;
+    background:var(--gold);
+    color:var(--maroon);
+    border:3px solid var(--gold-dark);
+    border-radius:44px;
+    padding:0;
+    width:220px;height:66px;
+    font-weight:900;
+    font-size:26px;
+    letter-spacing:1.5px;
+    cursor:pointer;
+    box-shadow:0 4px 4px rgba(21,86,121,.5);
+    transition:transform .15s ease, box-shadow .15s ease;
+    z-index:2;
+  }
+  .btn-start:hover:not(:disabled){transform:translateX(-50%) translateY(-3px) scale(1.03);}
+  .btn-start:active:not(:disabled){transform:translateX(-50%) translateY(0) scale(.97);}
+  .btn-start:disabled{opacity:.5;cursor:not-allowed;}
+  .btn-start .inner{
+    display:flex;align-items:center;justify-content:center;height:100%;
+  }
+  .btn-start .inner-outline{
+    position:absolute;top:6px;left:6px;
+    width:calc(100% - 12px);height:calc(100% - 12px);
+    pointer-events:none;
+  }
+
+  /* ---------------- play screen ---------------- */
+  #play{gap:14px;}
+  .mode-title{
+    width:min(90vw,420px);
+    max-height:110px;
+    object-fit:contain;
+    filter:drop-shadow(0 4px 2px rgba(21,86,121,.5));
+    animation:logoPop .5s cubic-bezier(.22,1.6,.4,1) both;
+  }
+  .mode-subline{
+    font-family:'Cherry Bomb One',cursive;
+    font-size:clamp(24px,4vw,40px);
+    color:var(--navy);
+    text-align:center;
+    filter:drop-shadow(0 4px 2px rgba(21,86,121,.5));
+    transition:color .3s ease;
+    paint-order:stroke fill;
+    -webkit-text-stroke-width:5px;
+    -webkit-text-stroke-color:#ffffff;
+    text-stroke-width:5px;
+    text-stroke-color:#ffffff;
+  }
+  .mode-subline.urgent{color:var(--coral);animation:pulseUrgent .6s ease infinite;}
+  .mode-subline.bump{animation:bump .35s ease;}
+  @keyframes pulseUrgent{0%,100%{transform:scale(1);}50%{transform:scale(1.08);}}
+  @keyframes bump{0%{transform:scale(1);}40%{transform:scale(1.18);}100%{transform:scale(1);}}
+
+  .status-bar{
+    background:var(--white);
+    border:4px solid var(--navy);
+    border-radius:15px;
+    box-shadow:0 4px 2px rgba(21,86,121,.5);
+    padding:10px 20px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:20px;
+    width:min(92vw,573px);
+  }
+  .status-bar span.label{font-weight:900;font-size:18px;color:var(--navy);white-space:nowrap;}
+  .status-correct{display:flex;align-items:center;gap:8px;}
+  .status-correct img{width:24px;height:24px;}
+
+  .card-frame-wrap{position:relative;width:min(94vw,805px);margin-top:26px;}
+  .ribbon-howmany{
+    position:absolute;top:-30px;left:50%;translate:-50% 0;
+    width:min(70%,300px);z-index:2;
+    filter:drop-shadow(0 4px 2px rgba(21,86,121,.5));
+    animation:sway 4s ease-in-out infinite;
+  }
+  .card-frame{
+    position:relative;
+    background:var(--white);
+    border:5px solid var(--navy);
+    border-radius:30px;
+    padding:22px;
+    min-height:280px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .card-frame-dash{position:absolute;top:22px;left:22px;right:22px;bottom:22px;pointer-events:none;}
+  .card-frame-dash rect{
+    x:1.75px;y:1.75px;width:calc(100% - 3.5px);height:calc(100% - 3.5px);
+    rx:14px;stroke-width:3.5px;stroke-dasharray:12 8;
+  }
+  .card-frame-inner{
+    border-radius:16px;
+    width:100%;
+    min-height:236px;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:22px;
+    padding:26px 10px;
+    --cell:clamp(46px,12vw,90px);
+  }
+
+  .frame-stack{display:flex;flex-direction:column;gap:20px;align-items:center;}
+  .frame-stack.compact{--cell:clamp(38px,10vw,80px);gap:14px;}
+  .frame-block{display:flex;flex-direction:column;}
+  .frame-row{display:flex;}
+  .frame-cell{
+    width:var(--cell,90px);height:var(--cell,90px);
+    border:2.6px solid var(--navy);
+    background:var(--white);
+    margin-left:-2.6px;
+    display:flex;align-items:center;justify-content:center;
+  }
+  .frame-row .frame-cell:first-child{margin-left:0;}
+  .frame-row + .frame-row .frame-cell{margin-top:-2.6px;}
+  .frame-cell .dot{
+    width:56%;height:56%;
+    border-radius:50%;
+    background:var(--navy);
+    transform:scale(0);
+    animation:dotPop .32s cubic-bezier(.3,1.7,.5,1) forwards;
+  }
+  @keyframes dotPop{to{transform:scale(1);}}
+
+  .choices{display:flex;gap:20px;align-items:center;justify-content:center;flex-wrap:wrap;margin-top:6px;}
+  .choice-btn{
+    position:relative;
+    width:100px;height:100px;
+    border:0;background:none;padding:0;cursor:pointer;
+    filter:drop-shadow(0 4px 2px rgba(21,86,121,.5));
+    transition:transform .15s ease;
+  }
+  .choice-btn img,.choice-btn svg.chip{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;}
+  .choice-btn .num{
+    position:relative;z-index:1;
+    display:flex;align-items:center;justify-content:center;
+    height:100%;
+    font-family:'Epilogue',sans-serif;font-weight:900;
+    font-size:44px;color:var(--white);
+    paint-order:stroke fill;
+    -webkit-text-stroke-width:6px;
+    text-stroke-width:6px;
+  }
+  .choice-btn:hover:not(:disabled){transform:translateY(-4px) scale(1.05) rotate(-2deg);}
+  .choice-btn:active:not(:disabled){transform:translateY(0) scale(.94);}
+  .choice-btn:disabled{cursor:default;}
+  .choice-btn.is-correct{animation:correctPop .55s ease;}
+  @keyframes correctPop{
+    0%{transform:scale(1);}
+    35%{transform:scale(1.28) rotate(4deg);}
+    60%{transform:scale(.94) rotate(-2deg);}
+    100%{transform:scale(1.06) rotate(0);}
+  }
+  .choice-btn.is-wrong{animation:shake .5s ease;opacity:.45;}
+  @keyframes shake{
+    0%,100%{transform:translateX(0);}
+    20%{transform:translateX(-8px) rotate(-4deg);}
+    40%{transform:translateX(7px) rotate(3deg);}
+    60%{transform:translateX(-5px) rotate(-2deg);}
+    80%{transform:translateX(4px) rotate(1deg);}
+  }
+  .choice-btn.dimmed:not(.is-wrong){opacity:.55;}
+
+  .feedback-ribbon{
+    background:var(--white);
+    border:4px solid var(--navy);
+    border-radius:8px;
+    box-shadow:0 4px 2px rgba(21,86,121,.5);
+    padding:4px;
+    min-width:230px;
+    visibility:hidden;
+    opacity:0;
+    transform:translateY(-6px);
+    transition:opacity .2s ease, transform .2s ease;
+  }
+  .feedback-ribbon.show{visibility:visible;opacity:1;transform:translateY(0);}
+  .feedback-ribbon.correct{border-color:var(--teal);}
+  .feedback-ribbon .inner{
+    position:relative;
+    border-radius:5px;
+    padding:10px 16px;
+    text-align:center;
+    font-weight:500;
+    font-size:15px;
+    color:var(--navy);
+  }
+  .feedback-ribbon .inner > .dash-outline rect{
+    x:0.75px;y:0.75px;width:calc(100% - 1.5px);height:calc(100% - 1.5px);
+    rx:4px;stroke-width:1.5px;stroke-dasharray:5 4;
+  }
+  .feedback-ribbon.correct .inner > .dash-outline rect{stroke:var(--teal);}
+
+  /* ---------------- results screen ---------------- */
+  #results{gap:0;}
+  .results-wrap{position:relative;width:min(96vw,1000px);}
+  .ribbon-waytogo{
+    position:absolute;top:-58px;left:50%;translate:-50% 0;
+    width:min(55%,520px);z-index:2;
+    animation:sway 4.5s ease-in-out infinite;
+  }
+  .results-panel{
+    background:var(--white);
+    border:7px solid var(--navy);
+    border-radius:19px;
+    box-shadow:0 4px 4px rgba(21,86,121,.5);
+    padding:34px 20px 26px;
+    display:flex;flex-direction:column;align-items:center;gap:24px;
+  }
+  .stats-row{
+    position:relative;
+    background:#f9f2e9;
+    border-radius:11px;
+    width:100%;
+    padding:22px 10px;
+    display:flex;
+    justify-content:space-around;
+    flex-wrap:wrap;
+    gap:16px;
+  }
+  .stats-row > .dash-outline rect{
+    x:1px;y:1px;width:calc(100% - 2px);height:calc(100% - 2px);
+    rx:9px;stroke-width:2px;stroke-dasharray:8 6;
+  }
+  .stat{display:flex;flex-direction:column;align-items:center;gap:6px;}
+  .stat img{width:38px;height:38px;}
+  .stat-value{font-family:'Cherry Bomb One',cursive;font-size:clamp(26px,4vw,40px);color:var(--navy);}
+  .stat-label{font-weight:900;font-size:14px;color:var(--navy);}
+
+  .table-wrap{width:100%;overflow-x:auto;border-radius:16px;border:1px solid #000;}
+  table.results-table{border-collapse:collapse;width:100%;min-width:520px;}
+  table.results-table th{
+    background:var(--navy);color:var(--white);
+    font-weight:900;font-size:14px;
+    padding:8px 10px;border:1px solid #000;white-space:nowrap;
+  }
+  table.results-table td{
+    font-weight:500;font-size:14px;color:#000;
+    padding:8px 10px;border:1px solid #000;text-align:center;white-space:nowrap;
+  }
+  table.results-table td.icon-cell img,table.results-table td.icon-cell svg{width:26px;height:26px;vertical-align:middle;}
+
+  .results-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;filter:drop-shadow(0 4px 2px rgba(21,86,121,.5));}
+  .btn-pill{
+    position:relative;
+    font-family:inherit;font-weight:900;
+    border-radius:44px;
+    cursor:pointer;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    height:66px;padding:0 22px;
+    transition:transform .15s ease;
+  }
+  .btn-pill:hover{transform:translateY(-3px) scale(1.03);}
+  .btn-pill:active{transform:translateY(0) scale(.97);}
+  .btn-pill img{width:18px;height:18px;position:relative;}
+  .btn-pill .dash-outline rect{
+    x:6px;y:6px;width:calc(100% - 12px);height:calc(100% - 12px);
+    rx:27px;stroke-width:1.5px;stroke-dasharray:6 5;
+  }
+  .btn-download{background:var(--coral);color:var(--maroon);border:3px solid var(--maroon);font-size:14px;}
+  .btn-download .dash-outline rect{stroke:var(--maroon);}
+  .btn-restart{background:var(--gold);color:var(--maroon);border:3px solid var(--gold-dark);font-size:20px;}
+  .btn-restart .dash-outline rect{stroke:var(--gold-dark);}
+
+  /* ---------------- confetti ---------------- */
+  #confettiLayer{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden;}
+  .confetti-piece{
+    position:absolute;top:-20px;
+    width:9px;height:14px;
+    opacity:.95;
+    animation:confettiFall linear forwards;
+  }
+  @keyframes confettiFall{
+    to{transform:translateY(110vh) rotate(540deg);opacity:.2;}
+  }
+
+  @media (max-width:640px){
+    .option-tile{width:calc(33% - 8px);min-height:110px;padding:10px 6px;}
+    .choice-btn{width:78px;height:78px;}
+    .choice-btn .num{font-size:34px;}
+    .card-frame{padding:10px;}
+    .card-frame-inner{padding:18px 4px;}
+  }
+</style>
+</head>
+<body>
+
+<div id="confettiLayer" aria-hidden="true"></div>
+
+<!-- ===================== SETUP ===================== -->
+<section id="setup" class="screen active">
+  <div class="bunting bunting-left"><img src="Assets/Pennant-Banner_left.svg" alt=""></div>
+  <div class="bunting bunting-right"><img src="Assets/Pennant-Banner_right.svg" alt=""></div>
+
+  <img class="logo" src="Assets/Logo.png" alt="Frame Card Practice">
+
+  <div class="setup-card">
+    <img class="ribbon-top" src="Assets/LetsGetStarted_Ribbon.svg" alt="Let's get started!">
+    <div class="setup-card-inner">
+      <svg class="dash-outline" aria-hidden="true"><rect/></svg>
+      <h2 class="section-heading">Choose a mode</h2>
+      <div class="option-row" id="modeOptions">
+        <button type="button" class="option-tile selected" data-mode="practice">
+          <span class="selected-badge"><img src="Assets/Checkmark.svg" alt=""></span>
+          <span class="tile-icon icon-compass"></span>
+          <span class="tile-title">Free Practice</span>
+          <span class="tile-sub">10 questions, no clock!</span>
+        </button>
+        <button type="button" class="option-tile" data-mode="timed">
+          <span class="selected-badge"><img src="Assets/Checkmark.svg" alt=""></span>
+          <span class="tile-icon icon-hourglass"></span>
+          <span class="tile-title">Timed</span>
+          <span class="tile-sub">1 minute, as many as possible</span>
+        </button>
+        <button type="button" class="option-tile" data-mode="survival">
+          <span class="selected-badge"><img src="Assets/Checkmark.svg" alt=""></span>
+          <span class="tile-icon icon-crown"></span>
+          <span class="tile-title">Survival</span>
+          <span class="tile-sub">ends on first miss</span>
+        </button>
+      </div>
+
+      <h2 class="section-heading">Choose a card type</h2>
+      <div class="option-row" id="cardTypeOptions">
+        <button type="button" class="option-tile selected" data-cardtype="fiveframe">
+          <span class="selected-badge"><img src="Assets/Checkmark.svg" alt=""></span>
+          <span class="mini-frame" data-preview="fiveframe"></span>
+          <span class="tile-title">5 Frame</span>
+        </button>
+        <button type="button" class="option-tile" data-cardtype="tenframe">
+          <span class="selected-badge"><img src="Assets/Checkmark.svg" alt=""></span>
+          <span class="mini-frame" data-preview="tenframe"></span>
+          <span class="tile-title">Ten Frame</span>
+        </button>
+        <button type="button" class="option-tile" data-cardtype="doubletenframe">
+          <span class="selected-badge"><img src="Assets/Checkmark.svg" alt=""></span>
+          <span class="mini-frame-stack" data-preview="doubletenframe"></span>
+          <span class="tile-title">Double ten frame</span>
+        </button>
+      </div>
+    </div>
+
+    <button id="startBtn" class="btn-start" disabled>
+      <svg class="inner-outline" viewBox="0 0 208 54" preserveAspectRatio="none" aria-hidden="true">
+        <rect x="0.75" y="0.75" width="206.5" height="52.5" rx="26.25" fill="none" stroke="#b77b05" stroke-width="1.5" stroke-dasharray="6 5"/>
+      </svg>
+      <span class="inner">Start</span>
+    </button>
+  </div>
+
+</section>
+
+<!-- ===================== PLAY ===================== -->
+<section id="play" class="screen">
+  <img id="modeTitle" class="mode-title" src="" alt="">
+  <div id="modeSubline" class="mode-subline hidden"></div>
+
+  <div class="status-bar">
+    <span class="label" id="statusQuestion"></span>
+    <span class="status-correct"><img src="Assets/Checkmark.svg" alt=""><span class="label" id="statusCorrect"></span></span>
+  </div>
+
+  <div class="card-frame-wrap">
+    <img class="ribbon-howmany" src="Assets/HowMany_Ribbon.svg" alt="How Many?">
+    <div class="card-frame">
+      <div class="card-frame-inner" id="cardWrap"></div>
+      <div class="card-frame-dash">
+        <svg class="dash-outline" aria-hidden="true"><rect/></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="choices" id="choices" role="group" aria-label="Answer choices"></div>
+
+  <div class="feedback-ribbon" id="feedback">
+    <div class="inner">
+      <svg class="dash-outline" aria-hidden="true"><rect/></svg>
+      <span id="feedbackText"></span>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== RESULTS ===================== -->
+<section id="results" class="screen">
+  <div class="results-wrap">
+    <img class="ribbon-waytogo" src="Assets/Waytogo_Ribbon.svg" alt="Way to go!">
+    <div class="results-panel">
+      <div class="stats-row">
+        <svg class="dash-outline" aria-hidden="true"><rect/></svg>
+        <div class="stat">
+          <img src="Assets/trophy.svg" alt="">
+          <span class="stat-value" id="statScore">0/0</span>
+          <span class="stat-label">Your score</span>
+        </div>
+        <div class="stat">
+          <img src="Assets/target-arrow.svg" alt="">
+          <span class="stat-value" id="statAttempts">0</span>
+          <span class="stat-label">Total Attempts</span>
+        </div>
+        <div class="stat">
+          <img src="Assets/clock.svg" alt="">
+          <span class="stat-value" id="statTime">00:00</span>
+          <span class="stat-label">Total Time</span>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="results-table" id="attemptTable">
+          <thead>
+            <tr><th>#</th><th>Correct value</th><th>Choices shown</th><th>Attempts</th><th>First Try?</th></tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+
+      <div class="results-actions">
+        <button id="downloadScoreBtn" class="btn-pill btn-download">
+          <svg class="dash-outline" aria-hidden="true"><rect/></svg>
+          <img src="Assets/download.svg" alt="">Download scorecard (JSON)
+        </button>
+        <button id="restartBtn" class="btn-pill btn-restart">
+          <svg class="dash-outline" aria-hidden="true"><rect/></svg>
+          <img src="Assets/arrows-rotate-counter-clockwise.svg" alt="">Play again
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<script>
+(function(){
+
+  // ---------- Embedded card data (baked in at generation time — no runtime CSV read) ----------
+  var QUESTION_POOL = {"fiveframe": [{"cardType": "fiveframe", "correct": 2, "distractors": [3, 1, 4]}, {"cardType": "fiveframe", "correct": 2, "distractors": [4, 1, 5]}, {"cardType": "fiveframe", "correct": 2, "distractors": [5, 0, 4]}, {"cardType": "fiveframe", "correct": 3, "distractors": [4, 2, 1]}, {"cardType": "fiveframe", "correct": 1, "distractors": [5, 3, 4]}, {"cardType": "fiveframe", "correct": 4, "distractors": [3, 2, 1]}, {"cardType": "fiveframe", "correct": 2, "distractors": [4, 3, 1]}, {"cardType": "fiveframe", "correct": 5, "distractors": [1, 2, 0]}, {"cardType": "fiveframe", "correct": 1, "distractors": [4, 5, 0]}, {"cardType": "fiveframe", "correct": 1, "distractors": [0, 2, 5]}, {"cardType": "fiveframe", "correct": 2, "distractors": [1, 4, 0]}, {"cardType": "fiveframe", "correct": 0, "distractors": [2, 3, 5]}, {"cardType": "fiveframe", "correct": 3, "distractors": [0, 2, 5]}, {"cardType": "fiveframe", "correct": 3, "distractors": [2, 0, 5]}, {"cardType": "fiveframe", "correct": 0, "distractors": [2, 5, 3]}, {"cardType": "fiveframe", "correct": 3, "distractors": [4, 1, 0]}, {"cardType": "fiveframe", "correct": 2, "distractors": [3, 1, 5]}, {"cardType": "fiveframe", "correct": 0, "distractors": [5, 4, 3]}, {"cardType": "fiveframe", "correct": 3, "distractors": [5, 4, 2]}, {"cardType": "fiveframe", "correct": 5, "distractors": [1, 0, 3]}, {"cardType": "fiveframe", "correct": 1, "distractors": [0, 4, 5]}, {"cardType": "fiveframe", "correct": 1, "distractors": [4, 0, 3]}, {"cardType": "fiveframe", "correct": 2, "distractors": [1, 0, 5]}, {"cardType": "fiveframe", "correct": 4, "distractors": [3, 2, 0]}, {"cardType": "fiveframe", "correct": 1, "distractors": [5, 4, 3]}, {"cardType": "fiveframe", "correct": 2, "distractors": [4, 5, 3]}, {"cardType": "fiveframe", "correct": 5, "distractors": [4, 2, 0]}, {"cardType": "fiveframe", "correct": 3, "distractors": [1, 2, 5]}, {"cardType": "fiveframe", "correct": 3, "distractors": [2, 0, 5]}, {"cardType": "fiveframe", "correct": 0, "distractors": [3, 1, 2]}, {"cardType": "fiveframe", "correct": 3, "distractors": [1, 0, 4]}, {"cardType": "fiveframe", "correct": 2, "distractors": [3, 1, 5]}, {"cardType": "fiveframe", "correct": 2, "distractors": [5, 0, 4]}, {"cardType": "fiveframe", "correct": 5, "distractors": [2, 4, 3]}, {"cardType": "fiveframe", "correct": 3, "distractors": [5, 2, 0]}, {"cardType": "fiveframe", "correct": 1, "distractors": [5, 4, 3]}, {"cardType": "fiveframe", "correct": 0, "distractors": [5, 4, 2]}, {"cardType": "fiveframe", "correct": 1, "distractors": [3, 5, 2]}, {"cardType": "fiveframe", "correct": 5, "distractors": [3, 0, 2]}, {"cardType": "fiveframe", "correct": 1, "distractors": [3, 0, 5]}, {"cardType": "fiveframe", "correct": 3, "distractors": [4, 1, 5]}, {"cardType": "fiveframe", "correct": 1, "distractors": [2, 5, 0]}, {"cardType": "fiveframe", "correct": 1, "distractors": [0, 2, 4]}, {"cardType": "fiveframe", "correct": 4, "distractors": [5, 0, 3]}, {"cardType": "fiveframe", "correct": 5, "distractors": [4, 3, 2]}, {"cardType": "fiveframe", "correct": 3, "distractors": [0, 2, 5]}, {"cardType": "fiveframe", "correct": 4, "distractors": [5, 0, 1]}, {"cardType": "fiveframe", "correct": 4, "distractors": [0, 1, 5]}, {"cardType": "fiveframe", "correct": 0, "distractors": [5, 4, 1]}, {"cardType": "fiveframe", "correct": 4, "distractors": [0, 3, 1]}, {"cardType": "fiveframe", "correct": 4, "distractors": [2, 1, 3]}, {"cardType": "fiveframe", "correct": 5, "distractors": [4, 3, 2]}, {"cardType": "fiveframe", "correct": 2, "distractors": [3, 0, 1]}, {"cardType": "fiveframe", "correct": 1, "distractors": [5, 4, 3]}, {"cardType": "fiveframe", "correct": 5, "distractors": [4, 2, 1]}, {"cardType": "fiveframe", "correct": 1, "distractors": [0, 3, 2]}, {"cardType": "fiveframe", "correct": 0, "distractors": [1, 2, 5]}, {"cardType": "fiveframe", "correct": 4, "distractors": [2, 1, 5]}, {"cardType": "fiveframe", "correct": 0, "distractors": [5, 4, 3]}, {"cardType": "fiveframe", "correct": 4, "distractors": [5, 3, 2]}, {"cardType": "fiveframe", "correct": 3, "distractors": [1, 2, 4]}, {"cardType": "fiveframe", "correct": 3, "distractors": [0, 1, 5]}, {"cardType": "fiveframe", "correct": 5, "distractors": [1, 4, 2]}, {"cardType": "fiveframe", "correct": 1, "distractors": [5, 0, 2]}, {"cardType": "fiveframe", "correct": 5, "distractors": [2, 3, 1]}, {"cardType": "fiveframe", "correct": 1, "distractors": [0, 3, 2]}, {"cardType": "fiveframe", "correct": 3, "distractors": [0, 4, 2]}, {"cardType": "fiveframe", "correct": 3, "distractors": [0, 1, 4]}, {"cardType": "fiveframe", "correct": 2, "distractors": [1, 0, 4]}, {"cardType": "fiveframe", "correct": 0, "distractors": [1, 2, 5]}, {"cardType": "fiveframe", "correct": 4, "distractors": [3, 0, 2]}, {"cardType": "fiveframe", "correct": 0, "distractors": [2, 4, 5]}, {"cardType": "fiveframe", "correct": 1, "distractors": [2, 3, 4]}, {"cardType": "fiveframe", "correct": 3, "distractors": [1, 0, 4]}, {"cardType": "fiveframe", "correct": 0, "distractors": [2, 3, 5]}, {"cardType": "fiveframe", "correct": 5, "distractors": [2, 0, 3]}, {"cardType": "fiveframe", "correct": 0, "distractors": [1, 4, 5]}, {"cardType": "fiveframe", "correct": 2, "distractors": [5, 0, 1]}, {"cardType": "fiveframe", "correct": 4, "distractors": [3, 0, 2]}, {"cardType": "fiveframe", "correct": 3, "distractors": [2, 1, 0]}, {"cardType": "fiveframe", "correct": 3, "distractors": [5, 1, 0]}, {"cardType": "fiveframe", "correct": 2, "distractors": [5, 4, 1]}, {"cardType": "fiveframe", "correct": 5, "distractors": [1, 0, 4]}, {"cardType": "fiveframe", "correct": 0, "distractors": [2, 3, 4]}, {"cardType": "fiveframe", "correct": 3, "distractors": [2, 1, 4]}, {"cardType": "fiveframe", "correct": 4, "distractors": [5, 2, 1]}, {"cardType": "fiveframe", "correct": 1, "distractors": [0, 2, 4]}, {"cardType": "fiveframe", "correct": 2, "distractors": [3, 0, 5]}, {"cardType": "fiveframe", "correct": 2, "distractors": [4, 0, 5]}, {"cardType": "fiveframe", "correct": 4, "distractors": [5, 0, 1]}, {"cardType": "fiveframe", "correct": 3, "distractors": [5, 2, 0]}, {"cardType": "fiveframe", "correct": 3, "distractors": [0, 1, 4]}, {"cardType": "fiveframe", "correct": 5, "distractors": [2, 3, 4]}, {"cardType": "fiveframe", "correct": 2, "distractors": [4, 5, 3]}, {"cardType": "fiveframe", "correct": 4, "distractors": [3, 1, 0]}, {"cardType": "fiveframe", "correct": 0, "distractors": [5, 4, 3]}, {"cardType": "fiveframe", "correct": 4, "distractors": [3, 1, 2]}, {"cardType": "fiveframe", "correct": 1, "distractors": [0, 5, 4]}, {"cardType": "fiveframe", "correct": 4, "distractors": [1, 3, 2]}, {"cardType": "fiveframe", "correct": 3, "distractors": [1, 0, 5]}], "tenframe": [{"cardType": "tenframe", "correct": 8, "distractors": [6, 2, 4]}, {"cardType": "tenframe", "correct": 10, "distractors": [4, 1, 2]}, {"cardType": "tenframe", "correct": 10, "distractors": [4, 9, 5]}, {"cardType": "tenframe", "correct": 2, "distractors": [7, 1, 0]}, {"cardType": "tenframe", "correct": 8, "distractors": [4, 10, 9]}, {"cardType": "tenframe", "correct": 3, "distractors": [6, 5, 9]}, {"cardType": "tenframe", "correct": 5, "distractors": [0, 6, 8]}, {"cardType": "tenframe", "correct": 10, "distractors": [1, 7, 3]}, {"cardType": "tenframe", "correct": 8, "distractors": [10, 0, 3]}, {"cardType": "tenframe", "correct": 1, "distractors": [7, 2, 8]}, {"cardType": "tenframe", "correct": 5, "distractors": [4, 9, 1]}, {"cardType": "tenframe", "correct": 10, "distractors": [9, 4, 1]}, {"cardType": "tenframe", "correct": 9, "distractors": [6, 2, 7]}, {"cardType": "tenframe", "correct": 6, "distractors": [4, 5, 2]}, {"cardType": "tenframe", "correct": 3, "distractors": [6, 5, 1]}, {"cardType": "tenframe", "correct": 10, "distractors": [4, 9, 7]}, {"cardType": "tenframe", "correct": 5, "distractors": [10, 9, 3]}, {"cardType": "tenframe", "correct": 9, "distractors": [8, 3, 6]}, {"cardType": "tenframe", "correct": 5, "distractors": [0, 8, 3]}, {"cardType": "tenframe", "correct": 8, "distractors": [7, 4, 9]}, {"cardType": "tenframe", "correct": 6, "distractors": [8, 1, 4]}, {"cardType": "tenframe", "correct": 7, "distractors": [9, 8, 3]}, {"cardType": "tenframe", "correct": 4, "distractors": [10, 8, 3]}, {"cardType": "tenframe", "correct": 2, "distractors": [0, 1, 8]}, {"cardType": "tenframe", "correct": 6, "distractors": [2, 8, 10]}, {"cardType": "tenframe", "correct": 7, "distractors": [0, 5, 4]}, {"cardType": "tenframe", "correct": 7, "distractors": [8, 0, 10]}, {"cardType": "tenframe", "correct": 0, "distractors": [2, 9, 8]}, {"cardType": "tenframe", "correct": 2, "distractors": [0, 3, 4]}, {"cardType": "tenframe", "correct": 3, "distractors": [4, 9, 7]}, {"cardType": "tenframe", "correct": 9, "distractors": [5, 1, 0]}, {"cardType": "tenframe", "correct": 1, "distractors": [10, 3, 7]}, {"cardType": "tenframe", "correct": 8, "distractors": [9, 3, 5]}, {"cardType": "tenframe", "correct": 8, "distractors": [7, 3, 4]}, {"cardType": "tenframe", "correct": 4, "distractors": [10, 0, 5]}, {"cardType": "tenframe", "correct": 3, "distractors": [9, 6, 7]}, {"cardType": "tenframe", "correct": 2, "distractors": [7, 9, 3]}, {"cardType": "tenframe", "correct": 5, "distractors": [6, 4, 7]}, {"cardType": "tenframe", "correct": 2, "distractors": [10, 0, 9]}, {"cardType": "tenframe", "correct": 1, "distractors": [8, 3, 9]}, {"cardType": "tenframe", "correct": 2, "distractors": [1, 4, 7]}, {"cardType": "tenframe", "correct": 6, "distractors": [5, 4, 10]}, {"cardType": "tenframe", "correct": 9, "distractors": [1, 4, 6]}, {"cardType": "tenframe", "correct": 4, "distractors": [6, 8, 10]}, {"cardType": "tenframe", "correct": 6, "distractors": [8, 4, 9]}, {"cardType": "tenframe", "correct": 8, "distractors": [2, 9, 1]}, {"cardType": "tenframe", "correct": 10, "distractors": [7, 8, 9]}, {"cardType": "tenframe", "correct": 10, "distractors": [4, 5, 2]}, {"cardType": "tenframe", "correct": 3, "distractors": [1, 8, 4]}, {"cardType": "tenframe", "correct": 8, "distractors": [9, 4, 3]}, {"cardType": "tenframe", "correct": 0, "distractors": [7, 4, 6]}, {"cardType": "tenframe", "correct": 9, "distractors": [0, 7, 1]}, {"cardType": "tenframe", "correct": 3, "distractors": [1, 5, 10]}, {"cardType": "tenframe", "correct": 7, "distractors": [4, 9, 3]}, {"cardType": "tenframe", "correct": 4, "distractors": [1, 2, 0]}, {"cardType": "tenframe", "correct": 0, "distractors": [7, 10, 8]}, {"cardType": "tenframe", "correct": 9, "distractors": [7, 8, 6]}, {"cardType": "tenframe", "correct": 5, "distractors": [7, 8, 10]}, {"cardType": "tenframe", "correct": 2, "distractors": [10, 3, 9]}, {"cardType": "tenframe", "correct": 8, "distractors": [0, 5, 6]}, {"cardType": "tenframe", "correct": 4, "distractors": [7, 5, 0]}, {"cardType": "tenframe", "correct": 5, "distractors": [3, 10, 6]}, {"cardType": "tenframe", "correct": 4, "distractors": [0, 5, 3]}, {"cardType": "tenframe", "correct": 5, "distractors": [7, 8, 1]}, {"cardType": "tenframe", "correct": 7, "distractors": [1, 2, 4]}, {"cardType": "tenframe", "correct": 0, "distractors": [5, 6, 2]}, {"cardType": "tenframe", "correct": 9, "distractors": [8, 7, 4]}, {"cardType": "tenframe", "correct": 1, "distractors": [0, 2, 7]}, {"cardType": "tenframe", "correct": 5, "distractors": [10, 7, 1]}, {"cardType": "tenframe", "correct": 9, "distractors": [10, 5, 3]}, {"cardType": "tenframe", "correct": 8, "distractors": [3, 7, 9]}, {"cardType": "tenframe", "correct": 0, "distractors": [6, 7, 3]}, {"cardType": "tenframe", "correct": 5, "distractors": [7, 1, 10]}, {"cardType": "tenframe", "correct": 7, "distractors": [4, 0, 8]}, {"cardType": "tenframe", "correct": 3, "distractors": [10, 9, 7]}, {"cardType": "tenframe", "correct": 9, "distractors": [5, 7, 0]}, {"cardType": "tenframe", "correct": 3, "distractors": [6, 7, 4]}, {"cardType": "tenframe", "correct": 4, "distractors": [3, 10, 8]}, {"cardType": "tenframe", "correct": 2, "distractors": [8, 5, 1]}, {"cardType": "tenframe", "correct": 0, "distractors": [3, 4, 1]}, {"cardType": "tenframe", "correct": 9, "distractors": [8, 7, 4]}, {"cardType": "tenframe", "correct": 9, "distractors": [3, 2, 0]}, {"cardType": "tenframe", "correct": 4, "distractors": [1, 0, 3]}, {"cardType": "tenframe", "correct": 9, "distractors": [10, 7, 8]}, {"cardType": "tenframe", "correct": 7, "distractors": [1, 10, 3]}, {"cardType": "tenframe", "correct": 7, "distractors": [4, 0, 6]}, {"cardType": "tenframe", "correct": 7, "distractors": [10, 3, 4]}, {"cardType": "tenframe", "correct": 7, "distractors": [10, 3, 1]}, {"cardType": "tenframe", "correct": 0, "distractors": [9, 1, 5]}, {"cardType": "tenframe", "correct": 4, "distractors": [8, 5, 0]}, {"cardType": "tenframe", "correct": 4, "distractors": [8, 0, 7]}, {"cardType": "tenframe", "correct": 0, "distractors": [5, 7, 3]}, {"cardType": "tenframe", "correct": 10, "distractors": [1, 0, 4]}, {"cardType": "tenframe", "correct": 5, "distractors": [9, 6, 10]}, {"cardType": "tenframe", "correct": 9, "distractors": [7, 10, 8]}, {"cardType": "tenframe", "correct": 0, "distractors": [9, 3, 10]}, {"cardType": "tenframe", "correct": 9, "distractors": [10, 3, 6]}, {"cardType": "tenframe", "correct": 3, "distractors": [0, 10, 6]}, {"cardType": "tenframe", "correct": 10, "distractors": [2, 6, 1]}, {"cardType": "tenframe", "correct": 4, "distractors": [10, 9, 7]}], "doubletenframe": [{"cardType": "doubletenframe", "correct": 19, "distractors": [16, 11, 20]}, {"cardType": "doubletenframe", "correct": 19, "distractors": [18, 11, 16]}, {"cardType": "doubletenframe", "correct": 20, "distractors": [11, 16, 12]}, {"cardType": "doubletenframe", "correct": 12, "distractors": [13, 17, 16]}, {"cardType": "doubletenframe", "correct": 17, "distractors": [19, 14, 15]}, {"cardType": "doubletenframe", "correct": 16, "distractors": [12, 15, 17]}, {"cardType": "doubletenframe", "correct": 10, "distractors": [12, 18, 14]}, {"cardType": "doubletenframe", "correct": 18, "distractors": [16, 12, 20]}, {"cardType": "doubletenframe", "correct": 17, "distractors": [15, 19, 16]}, {"cardType": "doubletenframe", "correct": 11, "distractors": [13, 12, 14]}, {"cardType": "doubletenframe", "correct": 17, "distractors": [11, 16, 20]}, {"cardType": "doubletenframe", "correct": 16, "distractors": [17, 15, 10]}, {"cardType": "doubletenframe", "correct": 12, "distractors": [17, 15, 11]}, {"cardType": "doubletenframe", "correct": 16, "distractors": [14, 17, 18]}, {"cardType": "doubletenframe", "correct": 18, "distractors": [10, 16, 13]}, {"cardType": "doubletenframe", "correct": 11, "distractors": [10, 16, 13]}, {"cardType": "doubletenframe", "correct": 17, "distractors": [10, 14, 16]}, {"cardType": "doubletenframe", "correct": 18, "distractors": [17, 20, 14]}, {"cardType": "doubletenframe", "correct": 19, "distractors": [15, 10, 13]}, {"cardType": "doubletenframe", "correct": 13, "distractors": [10, 15, 14]}, {"cardType": "doubletenframe", "correct": 17, "distractors": [18, 10, 14]}, {"cardType": "doubletenframe", "correct": 18, "distractors": [13, 11, 10]}, {"cardType": "doubletenframe", "correct": 10, "distractors": [14, 11, 15]}, {"cardType": "doubletenframe", "correct": 10, "distractors": [18, 12, 20]}, {"cardType": "doubletenframe", "correct": 16, "distractors": [17, 18, 11]}, {"cardType": "doubletenframe", "correct": 12, "distractors": [10, 13, 11]}, {"cardType": "doubletenframe", "correct": 11, "distractors": [16, 13, 17]}, {"cardType": "doubletenframe", "correct": 12, "distractors": [17, 11, 14]}, {"cardType": "doubletenframe", "correct": 16, "distractors": [13, 19, 17]}, {"cardType": "doubletenframe", "correct": 20, "distractors": [12, 18, 17]}, {"cardType": "doubletenframe", "correct": 18, "distractors": [16, 15, 12]}, {"cardType": "doubletenframe", "correct": 14, "distractors": [16, 19, 11]}, {"cardType": "doubletenframe", "correct": 15, "distractors": [13, 20, 12]}, {"cardType": "doubletenframe", "correct": 14, "distractors": [18, 20, 10]}, {"cardType": "doubletenframe", "correct": 20, "distractors": [10, 11, 15]}, {"cardType": "doubletenframe", "correct": 11, "distractors": [15, 10, 18]}, {"cardType": "doubletenframe", "correct": 17, "distractors": [11, 18, 20]}, {"cardType": "doubletenframe", "correct": 19, "distractors": [18, 14, 12]}, {"cardType": "doubletenframe", "correct": 13, "distractors": [20, 16, 12]}, {"cardType": "doubletenframe", "correct": 18, "distractors": [15, 20, 11]}, {"cardType": "doubletenframe", "correct": 11, "distractors": [14, 12, 20]}, {"cardType": "doubletenframe", "correct": 15, "distractors": [10, 11, 17]}, {"cardType": "doubletenframe", "correct": 11, "distractors": [10, 18, 15]}, {"cardType": "doubletenframe", "correct": 19, "distractors": [15, 12, 18]}, {"cardType": "doubletenframe", "correct": 20, "distractors": [12, 16, 17]}, {"cardType": "doubletenframe", "correct": 16, "distractors": [15, 13, 11]}, {"cardType": "doubletenframe", "correct": 17, "distractors": [10, 11, 15]}, {"cardType": "doubletenframe", "correct": 19, "distractors": [15, 10, 13]}, {"cardType": "doubletenframe", "correct": 17, "distractors": [19, 18, 13]}, {"cardType": "doubletenframe", "correct": 12, "distractors": [19, 20, 13]}, {"cardType": "doubletenframe", "correct": 16, "distractors": [12, 20, 10]}, {"cardType": "doubletenframe", "correct": 11, "distractors": [10, 18, 20]}, {"cardType": "doubletenframe", "correct": 20, "distractors": [19, 14, 10]}, {"cardType": "doubletenframe", "correct": 20, "distractors": [14, 16, 17]}, {"cardType": "doubletenframe", "correct": 14, "distractors": [15, 20, 18]}, {"cardType": "doubletenframe", "correct": 15, "distractors": [19, 13, 18]}, {"cardType": "doubletenframe", "correct": 15, "distractors": [13, 10, 11]}, {"cardType": "doubletenframe", "correct": 10, "distractors": [18, 19, 17]}, {"cardType": "doubletenframe", "correct": 18, "distractors": [16, 10, 14]}, {"cardType": "doubletenframe", "correct": 15, "distractors": [10, 13, 20]}, {"cardType": "doubletenframe", "correct": 11, "distractors": [16, 12, 19]}, {"cardType": "doubletenframe", "correct": 15, "distractors": [18, 12, 20]}, {"cardType": "doubletenframe", "correct": 12, "distractors": [13, 18, 20]}, {"cardType": "doubletenframe", "correct": 20, "distractors": [13, 18, 10]}, {"cardType": "doubletenframe", "correct": 16, "distractors": [13, 14, 10]}, {"cardType": "doubletenframe", "correct": 12, "distractors": [13, 14, 11]}, {"cardType": "doubletenframe", "correct": 16, "distractors": [15, 13, 12]}, {"cardType": "doubletenframe", "correct": 18, "distractors": [19, 16, 11]}, {"cardType": "doubletenframe", "correct": 14, "distractors": [16, 15, 12]}, {"cardType": "doubletenframe", "correct": 19, "distractors": [11, 10, 13]}, {"cardType": "doubletenframe", "correct": 10, "distractors": [20, 11, 15]}, {"cardType": "doubletenframe", "correct": 10, "distractors": [18, 17, 13]}, {"cardType": "doubletenframe", "correct": 12, "distractors": [13, 15, 20]}, {"cardType": "doubletenframe", "correct": 14, "distractors": [16, 12, 10]}, {"cardType": "doubletenframe", "correct": 15, "distractors": [13, 11, 20]}, {"cardType": "doubletenframe", "correct": 14, "distractors": [18, 19, 13]}, {"cardType": "doubletenframe", "correct": 15, "distractors": [14, 20, 17]}, {"cardType": "doubletenframe", "correct": 12, "distractors": [18, 14, 11]}, {"cardType": "doubletenframe", "correct": 16, "distractors": [17, 13, 10]}, {"cardType": "doubletenframe", "correct": 19, "distractors": [14, 11, 18]}, {"cardType": "doubletenframe", "correct": 11, "distractors": [15, 18, 10]}, {"cardType": "doubletenframe", "correct": 10, "distractors": [13, 15, 19]}, {"cardType": "doubletenframe", "correct": 19, "distractors": [15, 16, 17]}, {"cardType": "doubletenframe", "correct": 16, "distractors": [20, 12, 13]}, {"cardType": "doubletenframe", "correct": 11, "distractors": [14, 13, 12]}, {"cardType": "doubletenframe", "correct": 11, "distractors": [12, 14, 10]}, {"cardType": "doubletenframe", "correct": 20, "distractors": [19, 12, 16]}, {"cardType": "doubletenframe", "correct": 12, "distractors": [16, 14, 18]}, {"cardType": "doubletenframe", "correct": 16, "distractors": [10, 19, 13]}, {"cardType": "doubletenframe", "correct": 19, "distractors": [11, 17, 14]}, {"cardType": "doubletenframe", "correct": 17, "distractors": [16, 19, 12]}, {"cardType": "doubletenframe", "correct": 15, "distractors": [13, 14, 16]}, {"cardType": "doubletenframe", "correct": 15, "distractors": [11, 16, 18]}, {"cardType": "doubletenframe", "correct": 12, "distractors": [18, 14, 13]}, {"cardType": "doubletenframe", "correct": 17, "distractors": [18, 10, 12]}, {"cardType": "doubletenframe", "correct": 10, "distractors": [18, 12, 14]}, {"cardType": "doubletenframe", "correct": 15, "distractors": [19, 14, 16]}, {"cardType": "doubletenframe", "correct": 16, "distractors": [11, 10, 13]}, {"cardType": "doubletenframe", "correct": 20, "distractors": [18, 10, 14]}, {"cardType": "doubletenframe", "correct": 20, "distractors": [15, 16, 13]}]};
+  var GENERATED_AT = "2026-09-17 18:50 UTC";
+  var SOURCE_FILE = "data.csv";
+
+  var TYPE_LABELS = {
+    fiveframe: "Five Frame",
+    tenframe: "Ten Frame",
+    doubletenframe: "Double Ten Frame"
+  };
+  var MODE_TITLE_SRC = {
+    practice: "Assets/FreePractice.png",
+    timed: "Assets/TimedTitle.png",
+    survival: "Assets/SurvivalTitle.png"
+  };
+  // The exported NumberButton_*.svg assets each have one specific digit baked
+  // into their vector art (leftovers from the example question they were
+  // exported from), so they can't be reused as-is for arbitrary values. But the
+  // ring, color panel, inset bezel groove and top shine paths inside them are
+  // identical geometry across all four colors (just recolored) — extracted
+  // below — so the chip is rebuilt from those real paths and only the digit
+  // itself is swapped for live HTML text, styled with the same colored
+  // outline-on-white treatment the baked digits used.
+  var CHIP_RING = "M91.6898 0H16.3102C9.51148 0 4 5.51148 4 12.3102V87.6898C4 94.4885 9.51148 100 16.3102 100H91.6898C98.4885 100 104 94.4885 104 87.6898V12.3102C104 5.51148 98.4885 0 91.6898 0Z";
+  var CHIP_PANEL = "M90.4723 6.01227H17.5353C13.3805 6.01227 10.0123 9.3804 10.0123 13.5352V86.4722C10.0123 90.627 13.3805 93.9951 17.5353 93.9951H90.4723C94.6271 93.9951 97.9952 90.627 97.9952 86.4722V13.5352C97.9952 9.3804 94.6271 6.01227 90.4723 6.01227Z";
+  var CHIP_BEZEL = "M90.4723 94.9044C70.0755 95.1148 47.424 95.0397 26.907 94.8894C25.2611 94.8443 20.579 94.8518 18.9632 94.8142L17.6405 94.7992C15.213 94.7992 12.7705 93.7094 11.2374 91.8231C9.9898 90.335 9.3059 88.396 9.31342 86.4721L9.82446 44.0927C9.97477 35.3673 9.95974 23.6508 10.0123 14.963C9.52385 10.2809 12.6277 5.99713 17.5353 5.93701C31.6041 5.96707 67.5052 6.0272 81.1006 6.00465C82.7465 6.03471 87.4286 5.9821 89.0444 6.00465C93.7114 5.50863 97.9727 8.65007 97.9952 13.5276C98.0027 32.4063 98.371 58.2142 98.6415 77.0929C98.6566 79.4602 98.7468 84.0146 98.7693 86.3594C98.9572 90.8837 95.0266 94.942 90.4723 94.8969V94.9044ZM90.4723 93.0781C94.0947 93.1683 97.2812 89.9893 97.2211 86.3594L97.2362 85.0367C97.2362 83.4209 97.3339 78.7839 97.3489 77.0929C97.6194 58.2217 97.9802 32.4063 97.9952 13.5276C98.0328 9.94272 95.2446 6.62091 91.6823 6.10987C90.2093 5.91447 87.9095 6.03471 86.3914 6.00465C83.0997 6.03471 63.6573 5.9821 59.9071 6.00465L17.5278 6.07229C12.7404 6.05726 9.47875 10.326 10.0123 14.9555C10.0123 23.6283 10.095 35.3673 10.2002 44.0852L10.7113 86.4646C10.7338 88.0729 11.3275 89.6436 12.3797 90.8461C13.6874 92.3792 15.6564 93.2059 17.648 93.1758L18.9707 93.1608L21.6161 93.1383C43.982 92.8978 68.1966 92.8903 90.4798 93.0706L90.4723 93.0781Z";
+  var CHIP_SHINE = "M95.222 24.2446C95.1393 22.035 95.0717 19.818 95.0266 17.6085C95.1092 15.4215 94.5681 13.2721 92.9598 11.7539C91.4267 10.2058 89.2998 9.6797 87.173 9.85255L80.5368 9.94274C62.8456 10.1607 45.1543 10.1607 27.4631 9.94274L20.827 9.85255C18.7001 9.6797 16.5657 10.2058 15.0401 11.7539C13.4393 13.2721 12.8907 15.4215 12.9734 17.6085C12.9207 19.818 12.8531 22.035 12.7704 24.2446C12.6878 22.035 12.6201 19.818 12.575 17.6085C12.3646 15.3689 12.8681 12.9188 14.5065 11.2429C16.0772 9.4843 18.5272 8.76282 20.8194 8.86803L27.4555 8.77033C45.1468 8.55239 62.8381 8.55239 80.5293 8.77033L87.1654 8.86052C89.4576 8.74779 91.9152 9.47678 93.4784 11.2279C95.1092 12.9038 95.6278 15.3538 95.4098 17.5934C95.3572 19.8029 95.2896 22.02 95.2144 24.2295L95.222 24.2446Z";
+  var CHOICE_STYLES = [
+    { panel: "#409A81", bezel: "#155679", shine: "#74D7BC", stroke: "#155679" }, // green
+    { panel: "#CFE2F0", bezel: "#155679", shine: "#FFFFFF", stroke: "#155679" }, // blue
+    { panel: "#F27C70", bezel: "#600707", shine: "#FFFFFF", stroke: "#600707" }, // red
+    { panel: "#E19600", bezel: "#B77B05", shine: "#FEE2AA", stroke: "#600707" }  // yellow
+  ];
+  function chipSVG(style) {
+    return '<svg class="chip" viewBox="0 0 108 108" aria-hidden="true">' +
+      '<path d="' + CHIP_RING + '" fill="white"/>' +
+      '<path d="' + CHIP_PANEL + '" fill="' + style.panel + '"/>' +
+      '<path d="' + CHIP_BEZEL + '" fill="' + style.bezel + '"/>' +
+      '<path d="' + CHIP_SHINE + '" fill="' + style.shine + '"/>' +
+      '</svg>';
+  }
+
+  // ---------- Confetti ----------
+  var CONFETTI_COLORS = ["#fbb03b", "#409a81", "#f27c70", "#155679", "#74d7bc"];
+  function spawnConfetti(count, originYVh) {
+    var layer = document.getElementById("confettiLayer");
+    for (var i = 0; i < count; i++) {
+      var el = document.createElement("div");
+      el.className = "confetti-piece";
+      el.style.left = (Math.random() * 100) + "vw";
+      el.style.top = (originYVh != null ? originYVh : -2) + "vh";
+      el.style.background = CONFETTI_COLORS[Math.floor(Math.random() * CONFETTI_COLORS.length)];
+      el.style.borderRadius = Math.random() < 0.5 ? "50%" : "2px";
+      var duration = 1.1 + Math.random() * 0.9;
+      el.style.animationDuration = duration + "s";
+      el.style.animationDelay = (Math.random() * 0.25) + "s";
+      layer.appendChild(el);
+      (function(node, life){ setTimeout(function(){ node.remove(); }, life); })(el, (duration + 0.3) * 1000);
+    }
+  }
+
+  // ---------- Frame grid rendering (index-order fill, per Frame_Card_Format_Spec.md §4 fallback) ----------
+  function frameBlockHTML(cols, rows, fillOffset, fillCount, staggerBase) {
+    var rowsHtml = "";
+    for (var r = 0; r < rows; r++) {
+      var cellsHtml = "";
+      for (var c = 0; c < cols; c++) {
+        var idx = r * cols + c;
+        var globalIdx = fillOffset + idx;
+        var filled = globalIdx < fillCount;
+        var delay = (staggerBase + idx) * 35;
+        cellsHtml += '<div class="frame-cell">' + (filled ? '<span class="dot" style="animation-delay:' + delay + 'ms"></span>' : '') + '</div>';
+      }
+      rowsHtml += '<div class="frame-row">' + cellsHtml + '</div>';
+    }
+    return '<div class="frame-block">' + rowsHtml + '</div>';
+  }
+
+  function cardFrameHTML(cardType, value) {
+    if (cardType === "fiveframe") {
+      return '<div class="frame-stack">' + frameBlockHTML(5, 1, 0, value, 0) + '</div>';
+    } else if (cardType === "tenframe") {
+      return '<div class="frame-stack">' + frameBlockHTML(5, 2, 0, value, 0) + '</div>';
+    } else if (cardType === "doubletenframe") {
+      return '<div class="frame-stack compact">' +
+        frameBlockHTML(5, 2, 0, value, 0) +
+        frameBlockHTML(5, 2, 10, value, 10) +
+        '</div>';
+    }
+    return "";
+  }
+
+  function miniFrameHTML(cols, rows) {
+    var rowsHtml = "";
+    for (var r = 0; r < rows; r++) {
+      var cellsHtml = "";
+      for (var c = 0; c < cols; c++) cellsHtml += '<div class="frame-cell"></div>';
+      rowsHtml += '<div class="frame-row">' + cellsHtml + '</div>';
+    }
+    return rowsHtml;
+  }
+
+  document.querySelectorAll('[data-preview="fiveframe"]').forEach(function(el){ el.innerHTML = miniFrameHTML(5,1); });
+  document.querySelectorAll('[data-preview="tenframe"]').forEach(function(el){ el.innerHTML = miniFrameHTML(5,2); });
+  document.querySelectorAll('[data-preview="doubletenframe"]').forEach(function(el){
+    el.innerHTML =
+      '<span class="mini-frame">' + miniFrameHTML(5,2) + '</span>' +
+      '<span class="mini-frame">' + miniFrameHTML(5,2) + '</span>';
+  });
+
+  // ---------- Utilities ----------
+  function shuffle(arr) {
+    var a = arr.slice();
+    for (var i = a.length - 1; i > 0; i--) {
+      var j = Math.floor(Math.random() * (i + 1));
+      var tmp = a[i]; a[i] = a[j]; a[j] = tmp;
+    }
+    return a;
+  }
+  function pad2(n) { return n < 10 ? "0" + n : "" + n; }
+  function fmtDuration(totalSeconds) {
+    var m = Math.floor(totalSeconds / 60), s = totalSeconds % 60;
+    return pad2(m) + ":" + pad2(s);
+  }
+
+  function switchScreen(id) {
+    document.querySelectorAll(".screen").forEach(function(s){ s.classList.remove("active"); });
+    document.getElementById(id).classList.add("active");
+  }
+
+  // ---------- Session state ----------
+  var currentMode = null;
+  var currentCardType = null;
+  var sessionQuestions = [];
+  var practiceQueue = [];
+  var practiceIndex = 0;
+  var currentQuestion = null;
+  var timerInterval = null;
+  var timeRemaining = 60;
+  var sessionStart = null;
+  var streak = 0;
+
+  function newQuestionRecord(sourceQ) {
+    return {
+      cardType: sourceQ.cardType,
+      correct: sourceQ.correct,
+      choices: shuffle([sourceQ.correct].concat(sourceQ.distractors)),
+      attempts: [],
+      solvedOnFirstTry: false,
+      completed: false
+    };
+  }
+
+  var lastCorrectValue = null; // tracks the correct value of the immediately preceding question, across modes
+
+  function pickRandomSource(cardType) {
+    var pool = QUESTION_POOL[cardType];
+    var candidates = pool.filter(function(q){ return q.correct !== lastCorrectValue; });
+    if (candidates.length === 0) candidates = pool; // only possible if every card in the pool shares one value
+    var pick = candidates[Math.floor(Math.random() * candidates.length)];
+    lastCorrectValue = pick.correct;
+    return pick;
+  }
+
+  // Builds a fixed-length queue (always `count` questions, drawing with replacement
+  // if the pool is smaller) with no two consecutive entries sharing a correct value.
+  function buildNoRepeatQueue(cardType, count) {
+    var pool = QUESTION_POOL[cardType];
+    var queue = [];
+    var prevCorrect = null;
+    for (var i = 0; i < count; i++) {
+      var candidates = pool.filter(function(q){ return q.correct !== prevCorrect; });
+      if (candidates.length === 0) candidates = pool;
+      var pick = candidates[Math.floor(Math.random() * candidates.length)];
+      queue.push(pick);
+      prevCorrect = pick.correct;
+    }
+    return queue;
+  }
+
+  function startSession(mode, cardType) {
+    currentMode = mode;
+    currentCardType = cardType;
+    sessionQuestions = [];
+    currentQuestion = null;
+    sessionStart = Date.now();
+    streak = 0;
+
+    var modeSubline = document.getElementById("modeSubline");
+    document.getElementById("modeTitle").src = MODE_TITLE_SRC[mode];
+    modeSubline.classList.remove("urgent");
+    if (mode === "timed") {
+      modeSubline.classList.remove("hidden");
+    } else if (mode === "survival") {
+      modeSubline.classList.remove("hidden");
+      modeSubline.textContent = "Streak: 0";
+    } else {
+      modeSubline.classList.add("hidden");
+    }
+
+    switchScreen("play");
+    spawnConfetti(24);
+
+    lastCorrectValue = null;
+
+    if (mode === "practice") {
+      practiceQueue = buildNoRepeatQueue(cardType, 10); // always 10 per spec, repeats allowed if pool is smaller
+      practiceIndex = 0;
+      presentNext();
+    } else if (mode === "timed") {
+      timeRemaining = 60;
+      startTimer();
+      presentNext();
+    } else if (mode === "survival") {
+      presentNext();
+    }
+  }
+
+  function startTimer() {
+    updateTimerDisplay();
+    timerInterval = setInterval(function(){
+      timeRemaining--;
+      updateTimerDisplay();
+      if (timeRemaining <= 0) {
+        clearInterval(timerInterval);
+        finalizeInProgressQuestion(false);
+        endSession("time_up");
+      }
+    }, 1000);
+  }
+
+  function updateTimerDisplay() {
+    if (currentMode !== "timed") return;
+    var el = document.getElementById("modeSubline");
+    el.textContent = timeRemaining + " second" + (timeRemaining === 1 ? "" : "s") + " remaining";
+    el.classList.toggle("urgent", timeRemaining <= 10 && timeRemaining > 0);
+  }
+
+  function bumpEl(el) {
+    el.classList.remove("bump");
+    void el.offsetWidth;
+    el.classList.add("bump");
+  }
+
+  function presentNext() {
+    var sourceQ = null;
+
+    if (currentMode === "practice") {
+      if (practiceIndex >= practiceQueue.length) { endSession("completed"); return; }
+      sourceQ = practiceQueue[practiceIndex];
+    } else {
+      sourceQ = pickRandomSource(currentCardType);
+    }
+
+    currentQuestion = newQuestionRecord(sourceQ);
+    renderQuestion();
+  }
+
+  function renderQuestion() {
+    var feedback = document.getElementById("feedback");
+    feedback.classList.remove("show", "correct");
+
+    document.getElementById("cardWrap").innerHTML = cardFrameHTML(currentQuestion.cardType, currentQuestion.correct);
+
+    var choicesDiv = document.getElementById("choices");
+    choicesDiv.innerHTML = "";
+    currentQuestion.choices.forEach(function(val, i){
+      var btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "choice-btn";
+      var style = CHOICE_STYLES[i % CHOICE_STYLES.length];
+      btn.innerHTML = chipSVG(style) + '<span class="num" style="-webkit-text-stroke-color:' + style.stroke + ';text-stroke-color:' + style.stroke + '">' + val + '</span>';
+      btn.addEventListener("click", function(){ handleAnswer(val, btn); });
+      choicesDiv.appendChild(btn);
+    });
+
+    var correctCount = sessionQuestions.filter(function(q){return q.completed;}).length;
+    document.getElementById("statusCorrect").textContent = correctCount + " Correct";
+
+    if (currentMode === "practice") {
+      document.getElementById("statusQuestion").textContent = "Question " + (practiceIndex + 1) + " of " + practiceQueue.length;
+    } else if (currentMode === "survival") {
+      document.getElementById("statusQuestion").textContent = "Question " + (sessionQuestions.length + 1);
+    } else if (currentMode === "timed") {
+      document.getElementById("statusQuestion").textContent = "Question " + (sessionQuestions.length + 1);
+      updateTimerDisplay();
+    }
+  }
+
+  function disableAllChoiceButtons() {
+    var btns = document.querySelectorAll("#choices .choice-btn");
+    btns.forEach(function(b){ b.disabled = true; });
+  }
+
+  function showFeedback(text, correct) {
+    var feedback = document.getElementById("feedback");
+    document.getElementById("feedbackText").textContent = text;
+    feedback.classList.toggle("correct", !!correct);
+    feedback.classList.add("show");
+  }
+
+  function handleAnswer(selectedValue, btnEl) {
+    var q = currentQuestion;
+    var isCorrect = selectedValue === q.correct;
+    q.attempts.push({
+      attemptNumber: q.attempts.length + 1,
+      selected: selectedValue,
+      result: isCorrect ? "correct" : "incorrect",
+      timestamp: new Date().toISOString()
+    });
+
+    if (isCorrect) {
+      btnEl.classList.add("is-correct");
+      disableAllChoiceButtons();
+      document.querySelectorAll("#choices .choice-btn").forEach(function(b){ if (b !== btnEl) b.classList.add("dimmed"); });
+      showFeedback("Correct!", true);
+      var rect = btnEl.getBoundingClientRect();
+      spawnConfetti(14, (rect.top / window.innerHeight) * 100);
+      q.solvedOnFirstTry = q.attempts.length === 1;
+      q.completed = true;
+      sessionQuestions.push(q);
+      streak++;
+      if (currentMode === "survival") {
+        var subline = document.getElementById("modeSubline");
+        subline.textContent = "Streak: " + streak;
+        bumpEl(subline);
+      }
+      setTimeout(advanceAfterCorrect, 650);
+    } else {
+      btnEl.classList.add("is-wrong");
+      btnEl.disabled = true;
+      if (currentMode === "survival") {
+        showFeedback("Incorrect. Survival run ended.", false);
+        q.solvedOnFirstTry = false;
+        q.completed = false;
+        sessionQuestions.push(q);
+        disableAllChoiceButtons();
+        setTimeout(function(){ endSession("incorrect"); }, 900);
+      } else {
+        showFeedback("Not quite - Try again", false);
+      }
+    }
+  }
+
+  function advanceAfterCorrect() {
+    if (currentMode === "practice") {
+      practiceIndex++;
+      presentNext();
+    } else if (currentMode === "timed") {
+      if (timeRemaining > 0) presentNext();
+    } else if (currentMode === "survival") {
+      presentNext();
+    }
+  }
+
+  function finalizeInProgressQuestion(wasCorrect) {
+    if (currentQuestion && !currentQuestion.completed && sessionQuestions.indexOf(currentQuestion) === -1) {
+      currentQuestion.completed = wasCorrect;
+      sessionQuestions.push(currentQuestion);
+    }
+  }
+
+  function endSession(reason) {
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    var sessionEnd = Date.now();
+
+    var totalQuestions = sessionQuestions.length;
+    var correctCount = sessionQuestions.filter(function(q){ return q.completed; }).length;
+    var incorrectCount = totalQuestions - correctCount;
+    var totalAttempts = sessionQuestions.reduce(function(s,q){ return s + q.attempts.length; }, 0);
+    var firstTryCount = sessionQuestions.filter(function(q){ return q.solvedOnFirstTry; }).length;
+    var durationSeconds = Math.round((sessionEnd - sessionStart) / 1000);
+
+    window.__lastScorecard = {
+      mode: currentMode,
+      cardType: currentCardType,
+      endReason: reason,
+      startTime: new Date(sessionStart).toISOString(),
+      endTime: new Date(sessionEnd).toISOString(),
+      durationSeconds: durationSeconds,
+      summary: {
+        totalQuestions: totalQuestions,
+        correctCount: correctCount,
+        incorrectCount: incorrectCount,
+        totalAttempts: totalAttempts,
+        firstTryCount: firstTryCount
+      },
+      questions: sessionQuestions.map(function(q, i){
+        return {
+          index: i + 1,
+          cardType: q.cardType,
+          correctValue: q.correct,
+          choicesShown: q.choices,
+          attempts: q.attempts,
+          solvedOnFirstTry: q.solvedOnFirstTry,
+          totalAttempts: q.attempts.length,
+          completed: q.completed
+        };
+      })
+    };
+
+    switchScreen("results");
+    spawnConfetti(60);
+    renderResults(window.__lastScorecard);
+  }
+
+  var X_ICON_SVG = '<svg width="26" height="26" viewBox="0 0 26 26" fill="none" xmlns="http://www.w3.org/2000/svg">' +
+    '<rect width="26" height="26" rx="13" fill="#f27c70"/>' +
+    '<path d="M8.5 8.5L17.5 17.5M17.5 8.5L8.5 17.5" stroke="white" stroke-width="1.6" stroke-linecap="round"/>' +
+    '</svg>';
+
+  function animateCount(el, target, suffix) {
+    var duration = 650, start = performance.now();
+    function step(now) {
+      var t = Math.min(1, (now - start) / duration);
+      var eased = 1 - Math.pow(1 - t, 3);
+      el.textContent = Math.round(target * eased) + (suffix || "");
+      if (t < 1) requestAnimationFrame(step);
+      else el.textContent = target + (suffix || "");
+    }
+    requestAnimationFrame(step);
+  }
+
+  function renderResults(sc) {
+    document.getElementById("statScore").textContent = sc.summary.correctCount + "/" + sc.summary.totalQuestions;
+    var attemptsEl = document.getElementById("statAttempts");
+    animateCount(attemptsEl, sc.summary.totalAttempts, "");
+    document.getElementById("statTime").textContent = fmtDuration(sc.durationSeconds);
+
+    var tbody = document.querySelector("#attemptTable tbody");
+    tbody.innerHTML = "";
+    sc.questions.forEach(function(q){
+      var tr = document.createElement("tr");
+      var attemptsStr = q.attempts.map(function(a){
+        return a.selected + (a.result === "correct" ? "✓" : "✗");
+      }).join(" → ");
+      tr.innerHTML =
+        "<td>" + q.index + "</td>" +
+        "<td>" + q.correctValue + "</td>" +
+        "<td>" + q.choicesShown.join(", ") + "</td>" +
+        "<td>" + attemptsStr + "</td>" +
+        "<td class=\"icon-cell\">" + (q.solvedOnFirstTry ? '<img src="Assets/Checkmark.svg" alt="Yes">' : X_ICON_SVG) + "</td>";
+      tbody.appendChild(tr);
+    });
+  }
+
+  // ---------- Setup screen wiring ----------
+  var selectedMode = "practice";
+  var selectedCardType = "fiveframe";
+
+  function updateStartEnabled() {
+    document.getElementById("startBtn").disabled = !(selectedMode && selectedCardType);
+  }
+
+  document.querySelectorAll("#modeOptions .option-tile").forEach(function(tile){
+    tile.addEventListener("click", function(){
+      selectedMode = tile.getAttribute("data-mode");
+      document.querySelectorAll("#modeOptions .option-tile").forEach(function(t){ t.classList.toggle("selected", t === tile); });
+      updateStartEnabled();
+    });
+  });
+
+  function populateCardTypeTiles() {
+    var any = false;
+    document.querySelectorAll("#cardTypeOptions .option-tile").forEach(function(tile){
+      var key = tile.getAttribute("data-cardtype");
+      var n = (QUESTION_POOL[key] || []).length;
+      if (n === 0) {
+        tile.disabled = true;
+      } else {
+        any = true;
+        tile.addEventListener("click", function(){
+          selectedCardType = key;
+          document.querySelectorAll("#cardTypeOptions .option-tile").forEach(function(t){ t.classList.toggle("selected", t === tile); });
+          updateStartEnabled();
+        });
+      }
+    });
+    if (!any) document.getElementById("startBtn").disabled = true;
+  }
+
+  document.getElementById("startBtn").addEventListener("click", function(){
+    if (!selectedMode || !selectedCardType) return;
+    startSession(selectedMode, selectedCardType);
+  });
+
+  document.getElementById("downloadScoreBtn").addEventListener("click", function(){
+    var blob = new Blob([JSON.stringify(window.__lastScorecard, null, 2)], { type: "application/json" });
+    var a = document.createElement("a");
+    a.href = URL.createObjectURL(blob);
+    var ts = new Date().toISOString().replace(/[:.]/g, "-");
+    a.download = "scorecard_" + window.__lastScorecard.mode + "_" + ts + ".json";
+    a.click();
+  });
+
+  document.getElementById("restartBtn").addEventListener("click", function(){
+    switchScreen("setup");
+  });
+
+  populateCardTypeTiles();
+  updateStartEnabled();
+
+})();
+</script>
+</body>
+</html>
