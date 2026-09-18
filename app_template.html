@@ -404,8 +404,12 @@
   #results{gap:0;justify-content:flex-start;padding-top:90px;}
   .results-wrap{position:relative;width:min(96vw,1000px);}
   .ribbon-waytogo{
-    position:absolute;top:-58px;left:50%;translate:-50% 0;
-    width:min(55%,520px);z-index:2;
+    /* Offset as a % of the ribbon's own height (not a fixed px) so the
+       overlap-into-the-panel ratio stays constant at any width — a fixed px
+       offset was taller than the ribbon itself once it shrank on narrow
+       screens, lifting it clear off the panel instead of overlapping it. */
+    position:absolute;top:0;left:50%;translate:-50% -45%;
+    width:min(75%,520px);z-index:2;
     animation:sway 4.5s ease-in-out infinite;
   }
   .results-panel{
@@ -489,6 +493,7 @@
     .choice-btn .num{font-size:34px;}
     .card-frame{padding:10px;}
     .card-frame-inner{padding:18px 4px;}
+    #results{padding-top:140px;}
   }
 </style>
 </head>
