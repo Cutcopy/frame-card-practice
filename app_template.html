@@ -395,7 +395,13 @@
   .feedback-ribbon.correct .inner > .dash-outline rect{stroke:var(--teal);}
 
   /* ---------------- results screen ---------------- */
-  #results{gap:0;}
+  /* Results content height varies a lot (Timed/Survival can rack up 20+ rows),
+     so this screen can't rely on justify-content:center like the others —
+     once the panel is taller than the viewport, centering pushes the top of
+     the panel (and the ribbon overlapping above it) above y:0, off the
+     scrollable area entirely. Align to the top instead, with enough padding
+     to clear the ribbon's overlap. */
+  #results{gap:0;justify-content:flex-start;padding-top:90px;}
   .results-wrap{position:relative;width:min(96vw,1000px);}
   .ribbon-waytogo{
     position:absolute;top:-58px;left:50%;translate:-50% 0;
