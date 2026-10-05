@@ -225,6 +225,43 @@
     pointer-events:none;
   }
 
+  .motion-toggle{
+    position:relative;z-index:1;
+    margin-top:56px;
+    display:flex;align-items:center;gap:10px;
+    min-height:44px;
+    padding:6px 18px 6px 12px;
+    font-family:inherit;font-weight:700;font-size:14px;
+    color:var(--navy);
+    background:var(--white);
+    border:3px solid var(--navy);
+    border-radius:44px;
+    box-shadow:0 3px 2px rgba(21,86,121,.35);
+    cursor:pointer;
+  }
+  .switch-track{
+    position:relative;flex:none;
+    width:42px;height:24px;
+    border-radius:12px;
+    border:2px solid var(--navy);
+    background:var(--blue-light);
+    transition:background-color .2s ease;
+  }
+  .switch-thumb{
+    position:absolute;top:2px;left:2px;
+    width:16px;height:16px;border-radius:50%;
+    background:var(--navy);
+    transition:transform .2s ease;
+  }
+  .motion-toggle[aria-checked="true"] .switch-track{background:var(--teal);}
+  .motion-toggle[aria-checked="true"] .switch-thumb{
+    transform:translateX(18px);
+    background:var(--white);
+    box-shadow:0 0 0 1.5px var(--navy);
+  }
+  html.reduce-motion .switch-track,
+  html.reduce-motion .switch-thumb{transition:none;}
+
   /* ---------------- play screen ---------------- */
   #play{gap:14px;}
   .mode-title{
@@ -429,7 +466,7 @@
   .feedback-ribbon.correct .inner > .dash-outline rect{stroke:var(--teal);}
 
   /* ---------------- results screen ---------------- */
-  /* Results content height varies a lot (Timed/Survival can rack up 20+ rows),
+  /* Results content height varies a lot (Timed/Endless can rack up 20+ rows),
      so this screen can't rely on justify-content:center like the others —
      once the panel is taller than the viewport, centering pushes the top of
      the panel (and the ribbon overlapping above it) above y:0, off the
@@ -530,24 +567,43 @@
     #results{padding-top:140px;}
   }
 
-  /* Users with vestibular disorders / motion sensitivity can ask the OS for
-     this — cut the decorative motion (infinite sways, confetti, big pops)
-     down to near-nothing while keeping the state-change itself instant and
-     visible, rather than disabling animation wholesale and losing feedback. */
-  @media (prefers-reduced-motion:reduce){
-    .bunting,.ribbon-top,.ribbon-howmany,.ribbon-waytogo{animation:none;}
-    .screen.active{animation:none;}
-    .logo,.mode-title{animation:none;}
-    .choice-btn.is-correct{animation:none;}
-    .choice-btn.is-wrong{animation:none;}
-    .choice-btn.is-wrong .wrong-x{animation:none;opacity:1;transform:none;}
-    .frame-cell .dot{animation:none;transform:scale(1);}
-    .mode-subline.bump{animation:none;}
-    .mode-subline.urgent{animation:none;}
-    #confettiLayer{display:none;}
-    .answer-burst{display:none;}
-  }
+  /* Reduced motion — for users with vestibular disorders / motion
+     sensitivity. Cuts the decorative motion (infinite sways, confetti, big
+     pops) down to near-nothing while keeping the state-change itself
+     instant and visible, rather than disabling animation wholesale and
+     losing feedback. Driven by an html.reduce-motion class instead of a
+     prefers-reduced-motion media query so the in-app toggle can override the
+     OS setting either way; the head script seeds the class from the stored
+     choice, falling back to the OS preference. */
+  html.reduce-motion .bunting,
+  html.reduce-motion .ribbon-top,
+  html.reduce-motion .ribbon-howmany,
+  html.reduce-motion .ribbon-waytogo{animation:none;}
+  html.reduce-motion .screen.active{animation:none;}
+  html.reduce-motion .logo,
+  html.reduce-motion .mode-title{animation:none;}
+  html.reduce-motion .choice-btn.is-correct{animation:none;}
+  html.reduce-motion .choice-btn.is-wrong{animation:none;}
+  html.reduce-motion .choice-btn.is-wrong .wrong-x{animation:none;opacity:1;transform:none;}
+  html.reduce-motion .frame-cell .dot{animation:none;transform:scale(1);}
+  html.reduce-motion .mode-subline.bump{animation:none;}
+  html.reduce-motion .mode-subline.urgent{animation:none;}
+  html.reduce-motion #confettiLayer{display:none;}
+  html.reduce-motion .answer-burst{display:none;}
 </style>
+<script>
+(function(){
+  var reduce;
+  try {
+    var stored = localStorage.getItem("fcp-reduce-motion");
+    if (stored !== null) reduce = stored === "1";
+  } catch (e) {}
+  if (reduce === undefined) {
+    reduce = !!(window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+  }
+  if (reduce) document.documentElement.classList.add("reduce-motion");
+})();
+</script>
 </head>
 <body>
 
@@ -578,10 +634,10 @@
           <span class="tile-title">Timed</span>
           <span class="tile-sub">1 minute, as many as possible</span>
         </button>
-        <button type="button" class="option-tile" data-mode="survival">
+        <button type="button" class="option-tile" data-mode="endless">
           <span class="selected-badge"><img src="Assets/Checkmark.svg" alt=""></span>
           <span class="tile-icon icon-crown"></span>
-          <span class="tile-title">Survival</span>
+          <span class="tile-title">Endless</span>
           <span class="tile-sub">ends on first miss</span>
         </button>
       </div>
@@ -614,6 +670,10 @@
     </button>
   </div>
 
+  <button type="button" id="motionToggle" class="motion-toggle" role="switch" aria-checked="false">
+    <span class="switch-track" aria-hidden="true"><span class="switch-thumb"></span></span>
+    <span>Reduce animations</span>
+  </button>
 </section>
 
 <!-- ===================== PLAY ===================== -->
@@ -709,7 +769,12 @@
   var MODE_TITLE_SRC = {
     practice: "Assets/FreePractice.png",
     timed: "Assets/TimedTitle.png",
-    survival: "Assets/SurvivalTitle.png"
+    endless: "Assets/EndlessTitle.png"
+  };
+  var MODE_LABELS = {
+    practice: "Free Practice",
+    timed: "Timed",
+    endless: "Endless"
   };
   // The exported NumberButton_*.svg assets each have one specific digit baked
   // into their vector art (leftovers from the example question they were
@@ -745,6 +810,7 @@
   // ---------- Confetti ----------
   var CONFETTI_COLORS = ["#fbb03b", "#409a81", "#f27c70", "#155679", "#74d7bc"];
   function spawnConfetti(count, originYVh) {
+    if (document.documentElement.classList.contains("reduce-motion")) return;
     var layer = document.getElementById("confettiLayer");
     for (var i = 0; i < count; i++) {
       var el = document.createElement("div");
@@ -766,6 +832,7 @@
   // more "you got it" and less "party" for a single small button.
   var BURST_POINTS = "50.0,2.0 53.9,30.4 68.4,5.7 61.1,33.4 83.9,16.1 66.6,38.9 94.3,31.6 69.6,46.1 98.0,50.0 69.6,53.9 94.3,68.4 66.6,61.1 83.9,83.9 61.1,66.6 68.4,94.3 53.9,69.6 50.0,98.0 46.1,69.6 31.6,94.3 38.9,66.6 16.1,83.9 33.4,61.1 5.7,68.4 30.4,53.9 2.0,50.0 30.4,46.1 5.7,31.6 33.4,38.9 16.1,16.1 38.9,33.4 31.6,5.7 46.1,30.4";
   function spawnAnswerBurst(btnEl) {
+    if (document.documentElement.classList.contains("reduce-motion")) return;
     var wrapper = document.createElement("div");
     wrapper.className = "answer-burst";
     wrapper.setAttribute("aria-hidden", "true");
@@ -902,11 +969,13 @@
     streak = 0;
 
     var modeSubline = document.getElementById("modeSubline");
-    document.getElementById("modeTitle").src = MODE_TITLE_SRC[mode];
+    var modeTitleImg = document.getElementById("modeTitle");
+    modeTitleImg.src = MODE_TITLE_SRC[mode];
+    modeTitleImg.alt = MODE_LABELS[mode];
     modeSubline.classList.remove("urgent");
     if (mode === "timed") {
       modeSubline.classList.remove("hidden");
-    } else if (mode === "survival") {
+    } else if (mode === "endless") {
       modeSubline.classList.remove("hidden");
       modeSubline.textContent = "Streak: 0";
     } else {
@@ -926,7 +995,7 @@
       timeRemaining = 60;
       startTimer();
       presentNext();
-    } else if (mode === "survival") {
+    } else if (mode === "endless") {
       presentNext();
     }
   }
@@ -999,7 +1068,7 @@
 
     if (currentMode === "practice") {
       document.getElementById("statusQuestion").textContent = "Question " + (practiceIndex + 1) + " of " + practiceQueue.length;
-    } else if (currentMode === "survival") {
+    } else if (currentMode === "endless") {
       document.getElementById("statusQuestion").textContent = "Question " + (sessionQuestions.length + 1);
     } else if (currentMode === "timed") {
       document.getElementById("statusQuestion").textContent = "Question " + (sessionQuestions.length + 1);
@@ -1039,7 +1108,7 @@
       q.completed = true;
       sessionQuestions.push(q);
       streak++;
-      if (currentMode === "survival") {
+      if (currentMode === "endless") {
         var subline = document.getElementById("modeSubline");
         subline.textContent = "Streak: " + streak;
         bumpEl(subline);
@@ -1048,8 +1117,8 @@
     } else {
       btnEl.classList.add("is-wrong");
       btnEl.disabled = true;
-      if (currentMode === "survival") {
-        showFeedback("Incorrect. Survival run ended.", false);
+      if (currentMode === "endless") {
+        showFeedback("Not quite - that's the end of this run.", false);
         q.solvedOnFirstTry = false;
         q.completed = false;
         sessionQuestions.push(q);
@@ -1067,7 +1136,7 @@
       presentNext();
     } else if (currentMode === "timed") {
       if (timeRemaining > 0) presentNext();
-    } else if (currentMode === "survival") {
+    } else if (currentMode === "endless") {
       presentNext();
     }
   }
@@ -1228,6 +1297,18 @@
   document.getElementById("restartBtn").addEventListener("click", function(){
     switchScreen("setup");
   });
+
+  var motionToggle = document.getElementById("motionToggle");
+  function syncMotionToggle() {
+    motionToggle.setAttribute("aria-checked", String(document.documentElement.classList.contains("reduce-motion")));
+  }
+  motionToggle.addEventListener("click", function(){
+    var reduce = !document.documentElement.classList.contains("reduce-motion");
+    document.documentElement.classList.toggle("reduce-motion", reduce);
+    try { localStorage.setItem("fcp-reduce-motion", reduce ? "1" : "0"); } catch (e) {}
+    syncMotionToggle();
+  });
+  syncMotionToggle();
 
   populateCardTypeTiles();
   updateStartEnabled();

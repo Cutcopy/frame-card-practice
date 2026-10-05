@@ -10,7 +10,7 @@ double ten-frame grid geometry.
 
 | File | Purpose |
 |---|---|
-| `app_template.html` | The app shell. Contains all UI, mode logic (Free Practice / Timed / Survival), card rendering, scoring, and the scorecard export — **plus** a placeholder (`/*__QUESTION_POOL__*/{}/*__END_QUESTION_POOL__*/`) where card data gets injected. Not meant to be opened directly with real data — it has an empty pool. Edit this file when you need to change app *behavior*. |
+| `app_template.html` | The app shell. Contains all UI, mode logic (Free Practice / Timed / Endless), card rendering, scoring, and the scorecard export — **plus** a placeholder (`/*__QUESTION_POOL__*/{}/*__END_QUESTION_POOL__*/`) where card data gets injected. Not meant to be opened directly with real data — it has an empty pool. Edit this file when you need to change app *behavior*. |
 | `generate_app.py` | The build step. Reads a CSV, validates it, collapses each row's distractor columns into a single `distractors` list, and writes a new standalone HTML file with that data baked into a copy of `app_template.html`. Run this any time you have a new or updated CSV. |
 | `frame_card_quiz_app.html` | Output of the generator — currently built from `Frame_Practice_Data.csv`. This is the file to actually hand to a student or open for testing. It has no file-upload step and no runtime CSV dependency; the data is a static JS object inside the file. |
 | `sample_frame_card_set.csv` | Small 15-row placeholder set (5 cards per card type) used early on to validate the generator before real data existed. Safe to ignore now that `Frame_Practice_Data.csv` is in use — kept only as a minimal reference for the CSV column format. |
