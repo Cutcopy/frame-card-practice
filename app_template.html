@@ -541,10 +541,53 @@
     x:6px;y:6px;width:calc(100% - 12px);height:calc(100% - 12px);
     rx:27px;stroke-width:1.5px;stroke-dasharray:6 5;
   }
-  .btn-download{background:var(--coral);color:var(--maroon);border:3px solid var(--maroon);font-size:14px;}
-  .btn-download .dash-outline rect{stroke:var(--maroon);}
-  .btn-restart{background:var(--gold);color:var(--maroon);border:3px solid var(--gold-dark);font-size:20px;}
-  .btn-restart .dash-outline rect{stroke:var(--gold-dark);}
+  .btn-coral{background:var(--coral);color:var(--maroon);border:3px solid var(--maroon);font-size:14px;}
+  .btn-coral .dash-outline rect{stroke:var(--maroon);}
+  .btn-gold{background:var(--gold);color:var(--maroon);border:3px solid var(--gold-dark);font-size:20px;}
+  .btn-gold .dash-outline rect{stroke:var(--gold-dark);}
+
+  /* ---------------- end game ---------------- */
+  .end-game-btn{
+    position:absolute;top:16px;left:16px;z-index:3;
+    min-height:40px;padding:6px 14px;
+    font-family:inherit;font-weight:700;font-size:13px;
+    color:var(--navy);
+    background:var(--white);
+    border:2px solid var(--navy);
+    border-radius:20px;
+    cursor:pointer;
+  }
+  .end-game-btn:hover{background:var(--blue-light);}
+  .confirm-dialog{
+    border:0;padding:0;background:transparent;
+    width:min(92vw,460px);
+    color:var(--navy);
+  }
+  .confirm-dialog::backdrop{background:rgba(21,86,121,.5);}
+  .confirm-dialog[open]{animation:dialogIn .25s cubic-bezier(.22,1.4,.4,1) both;}
+  @keyframes dialogIn{
+    from{opacity:0;transform:scale(.94);}
+    to{opacity:1;transform:scale(1);}
+  }
+  html.reduce-motion .confirm-dialog[open]{animation:none;}
+  .confirm-inner{
+    position:relative;
+    background:var(--white);
+    border:7px solid var(--navy);
+    border-radius:24px;
+    box-shadow:0 6px 18px rgba(0,0,0,.3);
+    padding:34px 24px 26px;
+    text-align:center;
+    display:flex;flex-direction:column;align-items:center;gap:12px;
+  }
+  .confirm-inner > .dash-outline rect{
+    x:9px;y:9px;width:calc(100% - 18px);height:calc(100% - 18px);
+    rx:15px;stroke-width:2px;stroke-dasharray:10 8;
+  }
+  .confirm-inner h2{margin:0;font-weight:900;font-size:26px;}
+  .confirm-inner p{margin:0;font-size:15px;}
+  .confirm-actions{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin-top:10px;filter:drop-shadow(0 4px 2px rgba(21,86,121,.5));}
+  .confirm-actions .btn-pill{font-size:18px;}
 
   /* ---------------- confetti ---------------- */
   #confettiLayer{position:fixed;inset:0;pointer-events:none;z-index:50;overflow:hidden;}
@@ -565,6 +608,7 @@
     .card-frame{padding:10px;}
     .card-frame-inner{padding:18px 4px;}
     #results{padding-top:140px;}
+    #play{padding-top:72px;}
   }
 
   /* Reduced motion — for users with vestibular disorders / motion
@@ -704,6 +748,10 @@
       <span id="feedbackText"></span>
     </div>
   </div>
+
+  <!-- Last in the DOM so keyboard and screen reader users reach it after the
+       answers, even though it sits in the top-left corner visually. -->
+  <button type="button" id="endGameBtn" class="end-game-btn">End game</button>
 </section>
 
 <!-- ===================== RESULTS ===================== -->
@@ -740,11 +788,11 @@
       </div>
 
       <div class="results-actions">
-        <button id="downloadScoreBtn" class="btn-pill btn-download">
+        <button id="downloadScoreBtn" class="btn-pill btn-coral">
           <svg class="dash-outline" aria-hidden="true"><rect/></svg>
           <img src="Assets/download.svg" alt="">Download scorecard (JSON)
         </button>
-        <button id="restartBtn" class="btn-pill btn-restart">
+        <button id="restartBtn" class="btn-pill btn-gold">
           <svg class="dash-outline" aria-hidden="true"><rect/></svg>
           <img src="Assets/arrows-rotate-counter-clockwise.svg" alt="">Play again
         </button>
@@ -752,6 +800,24 @@
     </div>
   </div>
 </section>
+
+<dialog id="endGameDialog" class="confirm-dialog" aria-labelledby="endGameTitle" aria-describedby="endGameDesc">
+  <div class="confirm-inner">
+    <svg class="dash-outline" aria-hidden="true"><rect/></svg>
+    <h2 id="endGameTitle">End this game?</h2>
+    <p id="endGameDesc">Your answers so far will show on the results screen.</p>
+    <div class="confirm-actions">
+      <button type="button" id="keepPlayingBtn" class="btn-pill btn-gold" autofocus>
+        <svg class="dash-outline" aria-hidden="true"><rect/></svg>
+        Keep playing
+      </button>
+      <button type="button" id="confirmEndBtn" class="btn-pill btn-coral">
+        <svg class="dash-outline" aria-hidden="true"><rect/></svg>
+        End game
+      </button>
+    </div>
+  </div>
+</dialog>
 
 <script>
 (function(){
@@ -921,6 +987,9 @@
   var timeRemaining = 60;
   var sessionStart = null;
   var streak = 0;
+  // Guards the delayed callbacks (advance after a correct answer, end after an
+  // Endless miss) so they can't fire into a session that was already ended.
+  var sessionActive = false;
 
   function newQuestionRecord(sourceQ) {
     return {
@@ -967,6 +1036,7 @@
     currentQuestion = null;
     sessionStart = Date.now();
     streak = 0;
+    sessionActive = true;
 
     var modeSubline = document.getElementById("modeSubline");
     var modeTitleImg = document.getElementById("modeTitle");
@@ -1131,6 +1201,7 @@
   }
 
   function advanceAfterCorrect() {
+    if (!sessionActive) return;
     if (currentMode === "practice") {
       practiceIndex++;
       presentNext();
@@ -1149,6 +1220,10 @@
   }
 
   function endSession(reason) {
+    if (!sessionActive) return;
+    sessionActive = false;
+    // An Endless miss can end the run while the confirm is still open.
+    if (endGameDialog.open) endGameDialog.close();
     if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
     var sessionEnd = Date.now();
 
@@ -1296,6 +1371,38 @@
 
   document.getElementById("restartBtn").addEventListener("click", function(){
     switchScreen("setup");
+  });
+
+  // ---------- End game ----------
+  var endGameDialog = document.getElementById("endGameDialog");
+
+  document.getElementById("endGameBtn").addEventListener("click", function(){
+    if (!sessionActive) return;
+    // Hold the clock while the confirm is open so reading it doesn't cost time.
+    if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+    // returnValue sticks between openings, and Esc closes without setting it.
+    endGameDialog.returnValue = "";
+    endGameDialog.showModal();
+  });
+
+  document.getElementById("keepPlayingBtn").addEventListener("click", function(){
+    endGameDialog.close("keep");
+  });
+
+  document.getElementById("confirmEndBtn").addEventListener("click", function(){
+    endGameDialog.close("end");
+  });
+
+  // Fires for all three exits, including Esc, which counts as "keep playing".
+  endGameDialog.addEventListener("close", function(){
+    if (!sessionActive) return;
+    if (endGameDialog.returnValue === "end") {
+      // An untouched question isn't an attempt, so only keep it if they tried it.
+      if (currentQuestion && currentQuestion.attempts.length > 0) finalizeInProgressQuestion(false);
+      endSession("ended_by_user");
+    } else if (currentMode === "timed" && timeRemaining > 0 && !timerInterval) {
+      startTimer();
+    }
   });
 
   var motionToggle = document.getElementById("motionToggle");
